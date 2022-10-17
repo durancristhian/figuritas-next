@@ -1,8 +1,22 @@
+html,
+body {
+  font-family: "Montserrat" !important;
+  font-display: block;
+  line-height: 1;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .card {
-  height: var(--card-height);
+  height: 840px;
   margin: 0 auto;
   position: relative;
-  width: var(--card-width);
+  width: 600px;
 }
 
 .background,
@@ -19,12 +33,10 @@
 }
 
 .background {
-  background-image: var(--card-bg);
   z-index: 0;
 }
 
 .playerImage {
-  background-image: var(--player-image);
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -39,19 +51,17 @@
 }
 
 .information {
-  background-image: var(--card-information);
   z-index: 2;
 }
 
 .flag {
-  background-image: var(--flag);
   z-index: 3;
 }
 
 .name {
-  bottom: var(--name-bottom);
+  bottom: 80px;
   color: #111;
-  font-size: var(--name-size);
+  font-size: 45px;
   font-weight: bold;
   left: 0;
   position: absolute;
@@ -62,9 +72,9 @@
 }
 
 .birthday {
-  bottom: var(--birthday-bottom);
+  bottom: 40px;
   color: white;
-  font-size: var(--birthday-size);
+  font-size: 20px;
   font-weight: bold;
   left: 0;
   position: absolute;

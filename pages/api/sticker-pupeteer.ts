@@ -1,0 +1,134 @@
+import chromium from "chrome-aws-lambda";
+import fs from "fs";
+import type { NextApiRequest, NextApiResponse } from "next";
+import path from "path";
+import puppeteer from "puppeteer-core";
+import { Person } from "../../types/person";
+
+type EndpointError = {
+  message: string;
+};
+
+export default async function stickerHandler(
+  req: NextApiRequest,
+  res: NextApiResponse<Buffer | string | EndpointError>
+) {
+  try {
+    if (req.method !== "POST") {
+      res.status(405).json({
+        message: "Method not allowed.",
+      });
+
+      return;
+    }
+
+    const stickerConfig = JSON.parse(req.body) as Person;
+
+    const generatePicture = async () =>
+      new Promise<Buffer | string>(async (resolve) => {
+        const browser = await puppeteer.launch(
+          process.env.NODE_ENV === "production"
+            ? {
+                args: chromium.args,
+                executablePath: await chromium.executablePath,
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+              }
+            : {}
+        );
+
+        let page = await browser.newPage();
+
+        await page.setViewport({ width: 600, height: 840 });
+
+        const css = fs.readFileSync(
+          path.join(process.cwd(), "public", "sticker-pupeteer.css"),
+          "utf8"
+        );
+
+        const cardBg = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            "background.png"
+          ),
+          { encoding: "base64" }
+        );
+
+        const information = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            `pos-${stickerConfig.position}.png`
+          ),
+          { encoding: "base64" }
+        );
+
+        const flag = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            `flag-${stickerConfig.country}.png`
+          ),
+          { encoding: "base64" }
+        );
+
+        const Montserrat = fs.readFileSync(
+          path.join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
+          { encoding: "base64" }
+        );
+
+        const html = `
+          <style>
+            @font-face {
+              font-family: "Montserrat";
+              src: url("data:font/ttf;base64,${Montserrat}");
+            }
+
+            ${css}
+          </style>
+          <div class="card">
+            <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
+            <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
+            <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
+            <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
+            <div class="name">${stickerConfig.name}</div>
+            <div class="birthday">${stickerConfig.birthday}</div>
+          </div>
+        `;
+
+        await page.setContent(html, {
+          waitUntil: [
+            "domcontentloaded",
+            "load",
+            "networkidle0",
+            "networkidle2",
+          ],
+        });
+
+        const buffer = await page.screenshot({
+          encoding: "binary",
+        });
+
+        resolve(buffer);
+
+        await browser.close();
+      });
+
+    const fileBuffer = await generatePicture();
+
+    res.setHeader("Content-Type", "image/png");
+    res.send(fileBuffer);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Error generating the picture.",
+    });
+
+    return;
+  }
+}
