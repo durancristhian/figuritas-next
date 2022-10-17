@@ -1,13 +1,9 @@
-import { createCanvas, loadImage, registerFont } from "canvas";
+import chromium from "chrome-aws-lambda";
+import fs from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
+import puppeteer from "puppeteer-core";
 import { Person } from "../../types/person";
-
-const STICKER_HEIGHT = 840;
-const STICKER_WIDTH = 600;
-
-const NAME_BOTTOM = STICKER_HEIGHT - 85;
-const BIRTHDAY_BOTTOM = STICKER_HEIGHT - 45;
 
 type EndpointError = {
   message: string;
@@ -15,7 +11,7 @@ type EndpointError = {
 
 export default async function stickerHandler(
   req: NextApiRequest,
-  res: NextApiResponse<Buffer | EndpointError>
+  res: NextApiResponse<Buffer | string | EndpointError>
 ) {
   try {
     if (req.method !== "POST") {
@@ -28,87 +24,104 @@ export default async function stickerHandler(
 
     const stickerConfig = JSON.parse(req.body) as Person;
 
-    const generatePicture = () =>
-      new Promise<Buffer>(async (resolve) => {
-        registerFont(path.resolve("./public/fonts/Montserrat-Regular.ttf"), {
-          family: "Montserrat",
+    const generatePicture = async () =>
+      new Promise<Buffer | string>(async (resolve) => {
+        const browser = await puppeteer.launch(
+          process.env.NODE_ENV === "production"
+            ? {
+                args: chromium.args,
+                executablePath: await chromium.executablePath,
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+              }
+            : {}
+        );
+
+        let page = await browser.newPage();
+
+        await page.setViewport({ width: 600, height: 840 });
+
+        const css = fs.readFileSync(
+          path.join(process.cwd(), "public", "sticker-pupeteer.css"),
+          "utf8"
+        );
+
+        const cardBg = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            "background.png"
+          ),
+          { encoding: "base64" }
+        );
+
+        const information = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            `pos-${stickerConfig.position}.png`
+          ),
+          { encoding: "base64" }
+        );
+
+        const flag = fs.readFileSync(
+          path.join(
+            process.cwd(),
+            "public",
+            "sticker-template",
+            `flag-${stickerConfig.country}.png`
+          ),
+          { encoding: "base64" }
+        );
+
+        const Montserrat = fs.readFileSync(
+          path.join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
+          { encoding: "base64" }
+        );
+
+        const html = `
+          <style>
+            @font-face {
+              font-family: "Montserrat";
+              src: url("data:font/ttf;base64,${Montserrat}");
+            }
+
+            ${css}
+          </style>
+          <div class="card">
+            <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
+            <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
+            <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
+            <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
+            <div class="name">${stickerConfig.name}</div>
+            <div class="birthday">${stickerConfig.birthday}</div>
+          </div>
+        `;
+
+        await page.setContent(html, {
+          waitUntil: [
+            "domcontentloaded",
+            "load",
+            "networkidle0",
+            "networkidle2",
+          ],
         });
 
-        registerFont(path.resolve("./public/fonts/Montserrat-Bold.ttf"), {
-          family: "Montserrat Bold",
+        const buffer = await page.screenshot({
+          encoding: "binary",
         });
 
-        const canvas = createCanvas(STICKER_WIDTH, STICKER_HEIGHT);
-        const ctx = canvas.getContext("2d");
+        resolve(buffer);
 
-        /* image preparation */
-        ctx.clearRect(0, 0, STICKER_WIDTH, STICKER_HEIGHT);
-
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, STICKER_WIDTH, STICKER_HEIGHT);
-
-        /* background */
-        const stickerBgPath = path.resolve(
-          "./public/sticker-template/background.png"
-        );
-        const stickerBg = await loadImage(stickerBgPath);
-
-        ctx.drawImage(stickerBg, 0, 0, STICKER_WIDTH, STICKER_HEIGHT);
-
-        /* player image */
-        const playerImage = await loadImage(stickerConfig.image);
-
-        /* const PLAYER_HEIGHT = STICKER_HEIGHT * 0.8;
-        const PLAYER_WIDTH = STICKER_WIDTH * 0.8;
-        const PLAYER_LEFT = STICKER_WIDTH * 0.1;
-        const PLAYER_TOP = STICKER_HEIGHT * 0.9; */
-
-        ctx.drawImage(
-          playerImage,
-          (STICKER_WIDTH - playerImage.width) / 2,
-          STICKER_HEIGHT - STICKER_HEIGHT * 0.1 - playerImage.height,
-          playerImage.width,
-          playerImage.height
-        );
-
-        /* position */
-        const stickerPositionPath = path.resolve(
-          `./public/sticker-template/pos-${stickerConfig.position}.png`
-        );
-        const StickerPosition = await loadImage(stickerPositionPath);
-
-        ctx.drawImage(StickerPosition, 0, 0, STICKER_WIDTH, STICKER_HEIGHT);
-
-        /* flag */
-        const stickerFlagPath = path.resolve(
-          `./public/sticker-template/flag-${stickerConfig.country}.png`
-        );
-        const stickerFlag = await loadImage(stickerFlagPath);
-
-        ctx.drawImage(stickerFlag, 0, 0, STICKER_WIDTH, STICKER_HEIGHT);
-
-        /* name */
-        ctx.font = `45px 'Montserrat Bold'`;
-        ctx.fillStyle = "#111";
-        ctx.textAlign = "center";
-        ctx.fillText(stickerConfig.name, STICKER_WIDTH / 2, NAME_BOTTOM);
-
-        /* birthday */
-        ctx.font = `20px 'Montserrat Bold'`;
-        ctx.fillStyle = "white";
-        ctx.fillText(
-          stickerConfig.birthday,
-          STICKER_WIDTH / 2,
-          BIRTHDAY_BOTTOM
-        );
-
-        resolve(canvas.toBuffer());
+        await browser.close();
       });
 
-    const canvasBuffer = await generatePicture();
+    const fileBuffer = await generatePicture();
 
     res.setHeader("Content-Type", "image/png");
-    res.send(canvasBuffer);
+    res.send(fileBuffer);
   } catch (error) {
     console.error(error);
 

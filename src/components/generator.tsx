@@ -75,7 +75,7 @@ export const Generator = () => {
 
       const cloudinaryImage = await cloudinaryResponse.json();
 
-      const response = await fetch("/api/sticker-pupeteer", {
+      const response = await fetch("/api/sticker", {
         method: "POST",
         body: JSON.stringify({
           birthday: dayjs(birthday).format("D/MMM"),
