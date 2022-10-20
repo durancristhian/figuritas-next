@@ -1,10 +1,18 @@
-import chromium from "chrome-aws-lambda";
 import fs from "fs";
 import multer from "multer";
 import type { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
 import path from "path";
-import puppeteer from "puppeteer-core";
+
+let chrome: any = {};
+let puppeteer: any;
+
+if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+  chrome = require("chrome-aws-lambda");
+  puppeteer = require("puppeteer-core");
+} else {
+  puppeteer = require("puppeteer");
+}
 
 type EndpointError = {
   message: string;
@@ -45,16 +53,18 @@ apiRoute.post(
 
     const generatePdf = async () =>
       new Promise<Buffer | string>(async (resolve) => {
-        const browser = await puppeteer.launch(
-          process.env.NODE_ENV === "production"
-            ? {
-                args: chromium.args,
-                executablePath: await chromium.executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-              }
-            : {}
-        );
+        let options = {};
+
+        if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+          options = {
+            args: chrome.args,
+            executablePath: await chrome.executablePath,
+            headless: true,
+            ignoreHTTPSErrors: true,
+          };
+        }
+
+        const browser = await puppeteer.launch(options);
 
         let page = await browser.newPage();
 

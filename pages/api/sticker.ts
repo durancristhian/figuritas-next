@@ -1,9 +1,17 @@
-import chromium from "chrome-aws-lambda";
 import fs from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
-import puppeteer from "puppeteer-core";
 import { Person } from "../../types/person";
+
+let chrome: any = {};
+let puppeteer: any;
+
+if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+  chrome = require("chrome-aws-lambda");
+  puppeteer = require("puppeteer-core");
+} else {
+  puppeteer = require("puppeteer");
+}
 
 type EndpointError = {
   message: string;
@@ -26,16 +34,18 @@ export default async function stickerHandler(
 
     const generatePicture = async () =>
       new Promise<Buffer | string>(async (resolve) => {
-        const browser = await puppeteer.launch(
-          process.env.NODE_ENV === "production"
-            ? {
-                args: chromium.args,
-                executablePath: await chromium.executablePath,
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-              }
-            : {}
-        );
+        let options = {};
+
+        if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+          options = {
+            args: chrome.args,
+            executablePath: await chrome.executablePath,
+            headless: true,
+            ignoreHTTPSErrors: true,
+          };
+        }
+
+        const browser = await puppeteer.launch(options);
 
         let page = await browser.newPage();
 
