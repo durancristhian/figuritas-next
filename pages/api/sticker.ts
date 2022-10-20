@@ -1,6 +1,6 @@
-import fs from "fs";
+import { readFileSync } from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
-import path from "path";
+import { join } from "path";
 import { Person } from "../../types/person";
 
 let chrome: any = {};
@@ -51,23 +51,18 @@ export default async function stickerHandler(
 
         await page.setViewport({ width: 600, height: 840 });
 
-        const css = fs.readFileSync(
-          path.join(process.cwd(), "public", "sticker-pupeteer.css"),
+        const css = readFileSync(
+          join(process.cwd(), "public", "sticker-pupeteer.css"),
           "utf8"
         );
 
-        const cardBg = fs.readFileSync(
-          path.join(
-            process.cwd(),
-            "public",
-            "sticker-template",
-            "background.png"
-          ),
+        const cardBg = readFileSync(
+          join(process.cwd(), "public", "sticker-template", "background.png"),
           { encoding: "base64" }
         );
 
-        const information = fs.readFileSync(
-          path.join(
+        const information = readFileSync(
+          join(
             process.cwd(),
             "public",
             "sticker-template",
@@ -76,8 +71,8 @@ export default async function stickerHandler(
           { encoding: "base64" }
         );
 
-        const flag = fs.readFileSync(
-          path.join(
+        const flag = readFileSync(
+          join(
             process.cwd(),
             "public",
             "sticker-template",
@@ -86,8 +81,8 @@ export default async function stickerHandler(
           { encoding: "base64" }
         );
 
-        const Montserrat = fs.readFileSync(
-          path.join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
+        const Montserrat = readFileSync(
+          join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
           { encoding: "base64" }
         );
 

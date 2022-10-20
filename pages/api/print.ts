@@ -1,8 +1,8 @@
-import fs from "fs";
+import { readFileSync } from "fs";
 import multer from "multer";
 import type { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
-import path from "path";
+import { join } from "path";
 
 let chrome: any = {};
 let puppeteer: any;
@@ -70,13 +70,13 @@ apiRoute.post(
 
         await page.setViewport({ width: 2480, height: 3508 });
 
-        const css = fs.readFileSync(
-          path.join(process.cwd(), "public", "print-pupeteer.css"),
+        const css = readFileSync(
+          join(process.cwd(), "public", "print-pupeteer.css"),
           "utf8"
         );
 
-        const Montserrat = fs.readFileSync(
-          path.join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
+        const Montserrat = readFileSync(
+          join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
           { encoding: "base64" }
         );
 
