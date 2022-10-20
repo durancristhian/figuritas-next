@@ -1,0 +1,30 @@
+html,
+body {
+  font-family: "Montserrat" !important;
+  line-height: 1;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.sticker-container {
+  height: calc(100vh / 4);
+  padding: 1px;
+  width: calc(100vw / 4);
+}
+
+.sticker {
+  display: block;
+  height: 100%;
+  margin: 0 auto;
+  width: 100%;
+}

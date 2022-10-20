@@ -1,5 +1,6 @@
 import { Box, Button, FileInput, Stack, Text, Title } from "@mantine/core";
 import { IconDownload } from "@tabler/icons";
+import download from "downloadjs";
 import chunk from "lodash.chunk";
 import { MouseEvent, useMemo, useState } from "react";
 import { useAnalytics } from "../contexts/analytics";
@@ -10,6 +11,10 @@ export const Print = () => {
   const [images, onImagesChange] = useState<File[]>();
 
   const pages = useMemo(() => chunk(images, 16), [images]);
+
+  const onResetForm = () => {
+    onImagesChange([]);
+  };
 
   const generatePdfFromImages = async (
     event: MouseEvent<HTMLButtonElement>
@@ -29,7 +34,44 @@ export const Print = () => {
 
       analytics.track("generate-pdf-click");
 
-      /* TODO: */
+      const formData = new FormData();
+
+      images.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      const response = await fetch("/api/print", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Response is not ok");
+      }
+
+      if (!response.body) {
+        throw new Error("Response body is empty");
+      }
+
+      const reader = response.body.getReader();
+
+      const chunks = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        chunks.push(value);
+      }
+
+      const blob = new Blob(chunks);
+
+      download(blob, "print.pdf");
+
+      onResetForm();
 
       analytics.track("generate-pdf-success", {
         pages: pages.length,
@@ -57,11 +99,7 @@ export const Print = () => {
         placeholder="Elige las figuritas"
         multiple
         value={images}
-        onChange={(payload) => {
-          if (payload) {
-            onImagesChange(payload);
-          }
-        }}
+        onChange={onImagesChange}
         disabled={inProgress}
       />
       <Text>

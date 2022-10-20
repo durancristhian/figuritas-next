@@ -34,7 +34,7 @@ export const Generator = () => {
   const [birthday, onBirthdayChange] = useState<Date | null>(DEFAULT_BIRTHDAY);
   const [position, onPositionChange] =
     useState<Person["position"]>(DEFAULT_POSITION);
-  const [image, onImageChange] = useState<File | null>(null);
+  const [image, onImageChange] = useState<File | null>();
   const [inProgress, setInProgress] = useState(false);
 
   const onResetForm = () => {
@@ -43,10 +43,6 @@ export const Generator = () => {
     onBirthdayChange(DEFAULT_BIRTHDAY);
     onPositionChange(DEFAULT_POSITION);
     onImageChange(null);
-  };
-
-  const onDownloadSuccess = () => {
-    onResetForm();
   };
 
   const disableActions = !name || !birthday || !image;
@@ -113,7 +109,7 @@ export const Generator = () => {
 
       download(blob, `${cardId}.png`);
 
-      onDownloadSuccess();
+      onResetForm();
 
       analytics.track("download-card-success", { id: cardId });
     } catch (error) {
