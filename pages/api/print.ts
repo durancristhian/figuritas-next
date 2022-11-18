@@ -1,7 +1,7 @@
 import multer from "multer";
 import type { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
-import { generatePdf } from "../src/utils/print";
+import { generatePdf } from "../../src/utils/print";
 
 type EndpointError = {
   message: string;

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { generatePicture } from "../src/utils/sticker";
-import { Person } from "../types/person";
+import { generatePicture } from "../../src/utils/sticker";
+import { Person } from "../../types/person";
 
 type EndpointError = {
   message: string;
