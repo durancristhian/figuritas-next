@@ -5,11 +5,18 @@ import playwright from "playwright-core";
 
 export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const options = {
-      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
-      executablePath: await chromium.executablePath,
-      headless: true,
-    };
+    const options =
+      process.env.VERCEL_ENV === "production"
+        ? {
+            args: [
+              ...chromium.args,
+              "--hide-scrollbars",
+              "--disable-web-security",
+            ],
+            executablePath: await chromium.executablePath,
+            headless: true,
+          }
+        : {};
 
     const browser = await playwright.chromium.launch(options);
 
