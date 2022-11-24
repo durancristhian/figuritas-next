@@ -1,9 +1,8 @@
 import chromium from "chrome-aws-lambda";
 import { readFileSync } from "fs";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
 import playwright from "playwright-core";
-import { Person } from "../../types/person";
 
 type EndpointError = {
   message: string;
@@ -22,7 +21,7 @@ export default async function stickerHandler(
       return;
     }
 
-    const stickerConfig = JSON.parse(req.body) as Person;
+    const stickerConfig = JSON.parse(req.body) as any;
 
     const fileBuffer = await generatePicture(stickerConfig);
 
@@ -39,7 +38,7 @@ export default async function stickerHandler(
   }
 }
 
-const generatePicture = async (stickerConfig: Person) =>
+const generatePicture = async (stickerConfig: any) =>
   new Promise<Buffer | string>(async (resolve) => {
     const options =
       process.env.VERCEL_ENV === "production"

@@ -1,6 +1,6 @@
 import chromium from "chrome-aws-lambda";
 import multer from "multer";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
 import playwright from "playwright-core";
 
