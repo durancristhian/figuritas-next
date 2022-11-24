@@ -115,7 +115,7 @@ const generatePdf = async (stickers: { buffer: Buffer }[]) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle0",
+      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
     });
 
     const buffer = await page.pdf({
