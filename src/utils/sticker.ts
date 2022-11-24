@@ -6,18 +6,11 @@ import { Person } from "../../types/person";
 
 export const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const options =
-      process.env.VERCEL_ENV === "production"
-        ? {
-            args: [
-              ...chromium.args,
-              "--hide-scrollbars",
-              "--disable-web-security",
-            ],
-            executablePath: await chromium.executablePath,
-            headless: true,
-          }
-        : {};
+    const options = {
+      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+      executablePath: await chromium.executablePath,
+      headless: true,
+    };
 
     const browser = await playwright.chromium.launch(options);
 
