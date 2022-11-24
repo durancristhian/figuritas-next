@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
+import { Browser } from "puppeteer";
 import { getBrowser } from "../../src/utils/get-browser";
 import { Person } from "../../types/person";
 
@@ -12,6 +13,8 @@ export default async function stickerHandler(
   req: NextApiRequest,
   res: NextApiResponse<Buffer | string | EndpointError>
 ) {
+  let browser = null;
+
   try {
     if (req.method !== "POST") {
       res.status(405).json({
@@ -23,7 +26,9 @@ export default async function stickerHandler(
 
     const stickerConfig = JSON.parse(req.body) as Person;
 
-    const fileBuffer = await generatePicture(stickerConfig);
+    browser = await getBrowser();
+
+    const fileBuffer = await generatePicture(browser, stickerConfig);
 
     res.setHeader("Content-Type", "image/png");
     res.send(fileBuffer);
@@ -33,15 +38,15 @@ export default async function stickerHandler(
     res.status(500).json({
       message: "Error generating the picture.",
     });
-
-    return;
+  } finally {
+    if (browser) {
+      browser.close();
+    }
   }
 }
 
-const generatePicture = async (stickerConfig: Person) =>
+const generatePicture = async (browser: Browser, stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const browser = await getBrowser();
-
     let page = await browser.newPage();
 
     await page.setViewport({ width: 600, height: 840 });
@@ -181,7 +186,7 @@ const generatePicture = async (stickerConfig: Person) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
+      waitUntil: "networkidle2",
     });
 
     const buffer = await page.screenshot();
