@@ -2,7 +2,7 @@ import chromium from "chrome-aws-lambda";
 import { readFileSync } from "fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
-import playwright from "playwright-core";
+import puppeteer from "puppeteer-core";
 import { Person } from "../../types/person";
 
 type EndpointError = {
@@ -41,24 +41,21 @@ export default async function stickerHandler(
 
 const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const options =
-      process.env.VERCEL_ENV === "production"
-        ? {
-            args: [
-              ...chromium.args,
-              "--hide-scrollbars",
-              "--disable-web-security",
-            ],
-            executablePath: await chromium.executablePath,
-            headless: true,
-          }
-        : {};
+    const executablePath =
+      (await chromium.executablePath) ||
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-    const browser = await playwright.chromium.launch(options);
+    const options = {
+      executablePath,
+      args: chromium.args,
+      headless: false,
+    };
+
+    const browser = await puppeteer.launch(options);
 
     let page = await browser.newPage();
 
-    await page.setViewportSize({ width: 600, height: 840 });
+    await page.setViewport({ width: 600, height: 840 });
 
     const css = `
       html,
@@ -177,31 +174,30 @@ const generatePicture = async (stickerConfig: Person) =>
     );
 
     const html = `
-          <style>
-            @font-face {
-              font-family: "Montserrat";
-              src: url("data:font/ttf;base64,${Montserrat}");
-            }
-
-            ${css}
-          </style>
-          <div class="card">
-            <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
-            <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
-            <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
-            <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
-            <div class="name">${stickerConfig.name}</div>
-            <div class="birthday">${stickerConfig.birthday}</div>
-          </div>
-        `;
+      <style>
+        @font-face {
+          font-family: "Montserrat";
+          src: url("data:font/ttf;base64,${Montserrat}");
+        
+        ${css}
+      </style>
+      <div class="card">
+        <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
+        <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
+        <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
+        <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
+        <div class="name">${stickerConfig.name}</div>
+        <div class="birthday">${stickerConfig.birthday}</div>
+      </div>
+    `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle",
+      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
     });
 
-    const buffer = await page.screenshot();
+    const buffer = await page.screenshot({ encoding: "binary" });
 
-    resolve(buffer);
+    resolve(buffer as Buffer);
 
     await browser.close();
   });

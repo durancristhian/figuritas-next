@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "pages/api/**/*": {
-      "excludeFiles": "node_modules/!(react-dom|@mantine)/**/*"
-    }
-  }
-}
