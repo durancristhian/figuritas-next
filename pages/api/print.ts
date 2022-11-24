@@ -1,7 +1,6 @@
 import multer from "multer";
 import { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
-import { Browser } from "puppeteer";
 import { getBrowser } from "../../src/utils/get-browser";
 
 type EndpointError = {
@@ -38,29 +37,13 @@ apiRoute.post(
     req: NextApiRequest,
     res: NextApiResponse<Buffer | string | EndpointError>
   ) => {
-    let browser = null;
+    // @ts-ignore
+    const stickers: { buffer: Buffer }[] = req.files || [];
 
-    try {
-      // @ts-ignore
-      const stickers: { buffer: Buffer }[] = req.files || [];
+    const fileBuffer = await generatePdf(stickers);
 
-      browser = await getBrowser();
-
-      const fileBuffer = await generatePdf(browser, stickers);
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.send(fileBuffer);
-    } catch (error) {
-      console.error(error);
-
-      res.status(500).json({
-        message: "Error generating the pdf.",
-      });
-    } finally {
-      if (browser) {
-        browser.close();
-      }
-    }
+    res.setHeader("Content-Type", "application/pdf");
+    res.send(fileBuffer);
   }
 );
 
@@ -73,8 +56,10 @@ export const config = {
   },
 };
 
-const generatePdf = async (browser: Browser, stickers: { buffer: Buffer }[]) =>
+const generatePdf = async (stickers: { buffer: Buffer }[]) =>
   new Promise<Buffer | string>(async (resolve) => {
+    const browser = await getBrowser();
+
     let page = await browser.newPage();
 
     await page.setViewport({ width: 2480, height: 3508 });
@@ -130,7 +115,7 @@ const generatePdf = async (browser: Browser, stickers: { buffer: Buffer }[]) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle2",
+      waitUntil: ["load", "domcontentloaded", "networkidle0", "networkidle2"],
     });
 
     const buffer = await page.pdf({

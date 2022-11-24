@@ -1,7 +1,6 @@
 import { readFileSync } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
-import { Browser } from "puppeteer";
 import { getBrowser } from "../../src/utils/get-browser";
 import { Person } from "../../types/person";
 
@@ -13,8 +12,6 @@ export default async function stickerHandler(
   req: NextApiRequest,
   res: NextApiResponse<Buffer | string | EndpointError>
 ) {
-  let browser = null;
-
   try {
     if (req.method !== "POST") {
       res.status(405).json({
@@ -26,9 +23,7 @@ export default async function stickerHandler(
 
     const stickerConfig = JSON.parse(req.body) as Person;
 
-    browser = await getBrowser();
-
-    const fileBuffer = await generatePicture(browser, stickerConfig);
+    const fileBuffer = await generatePicture(stickerConfig);
 
     res.setHeader("Content-Type", "image/png");
     res.send(fileBuffer);
@@ -38,15 +33,13 @@ export default async function stickerHandler(
     res.status(500).json({
       message: "Error generating the picture.",
     });
-  } finally {
-    if (browser) {
-      browser.close();
-    }
   }
 }
 
-const generatePicture = async (browser: Browser, stickerConfig: Person) =>
+const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
+    const browser = await getBrowser();
+
     let page = await browser.newPage();
 
     await page.setViewport({ width: 600, height: 840 });
@@ -172,7 +165,7 @@ const generatePicture = async (browser: Browser, stickerConfig: Person) =>
         @font-face {
           font-family: "Montserrat";
           src: url("data:font/ttf;base64,${Montserrat}");
-        
+        }
         ${css}
       </style>
       <div class="card">
@@ -186,7 +179,7 @@ const generatePicture = async (browser: Browser, stickerConfig: Person) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle2",
+      waitUntil: ["load", "domcontentloaded", "networkidle0", "networkidle2"],
     });
 
     const buffer = await page.screenshot();
