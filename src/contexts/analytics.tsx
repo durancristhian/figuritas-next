@@ -17,13 +17,13 @@ type AnalyticsProviderProps = {
 
 const AnalyticsProvider = ({ children }: AnalyticsProviderProps) => {
   useEffect(() => {
-    if (process.env.VERCEL_ENV === "production") {
+    if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") {
       splitbee.init();
     }
   }, []);
 
   const log = useCallback((event: string, data?: any) => {
-    if (process.env.VERCEL_ENV === "production") {
+    if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") {
       splitbee.track(event, data);
     } else {
       console.log({ event, data });

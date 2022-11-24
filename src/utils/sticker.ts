@@ -7,7 +7,7 @@ import { Person } from "../../types/person";
 export const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
     const options =
-      process.env.NODE_ENV === "production"
+      process.env.VERCEL_ENV === "production"
         ? {
             args: [
               ...chromium.args,

@@ -6,7 +6,7 @@ import playwright from "playwright-core";
 export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
   new Promise<Buffer | string>(async (resolve) => {
     const options =
-      process.env.NODE_ENV === "production"
+      process.env.VERCEL_ENV === "production"
         ? {
             args: [
               ...chromium.args,
