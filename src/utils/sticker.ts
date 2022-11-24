@@ -1,43 +1,37 @@
+import chromium from "chrome-aws-lambda";
 import { readFileSync } from "fs";
 import { join } from "path";
+import playwright from "playwright-core";
 import { Person } from "../../types/person";
-
-let chrome: any = {};
-let puppeteer: any;
-
-if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-  chrome = require("@sparticuz/chromium");
-  puppeteer = require("puppeteer-core");
-} else {
-  puppeteer = require("puppeteer");
-}
 
 export const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
-    let options = {};
+    const options =
+      process.env.NODE_ENV === "production"
+        ? {
+            args: [
+              ...chromium.args,
+              "--hide-scrollbars",
+              "--disable-web-security",
+            ],
+            executablePath: await chromium.executablePath,
+            headless: true,
+          }
+        : {};
 
-    if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-      options = {
-        args: chrome.args,
-        executablePath: await chrome.executablePath,
-        headless: true,
-        ignoreHTTPSErrors: true,
-      };
-    }
-
-    const browser = await puppeteer.launch(options);
+    const browser = await playwright.chromium.launch(options);
 
     let page = await browser.newPage();
 
-    await page.setViewport({ width: 600, height: 840 });
+    await page.setViewportSize({ width: 600, height: 840 });
 
     const css = readFileSync(
-      join(process.cwd(), "public", "sticker-pupeteer.css"),
+      join(process.cwd(), "public", "sticker-playwright.css"),
       "utf8"
     );
 
     const cardBg = readFileSync(
-      join(process.cwd(), "public", "sticker-template", "background.png"),
+      join(process.cwd(), "public", "sticker-template", "background.jpg"),
       { encoding: "base64" }
     );
 
@@ -62,7 +56,7 @@ export const generatePicture = async (stickerConfig: Person) =>
     );
 
     const Montserrat = readFileSync(
-      join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
+      join(process.cwd(), "public", "fonts", "Montserrat-Bold.woff2"),
       { encoding: "base64" }
     );
 
@@ -86,12 +80,10 @@ export const generatePicture = async (stickerConfig: Person) =>
         `;
 
     await page.setContent(html, {
-      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
+      waitUntil: "networkidle",
     });
 
-    const buffer = await page.screenshot({
-      encoding: "binary",
-    });
+    const buffer = await page.screenshot();
 
     resolve(buffer);
 

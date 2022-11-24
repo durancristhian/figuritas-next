@@ -1,52 +1,36 @@
+import chromium from "chrome-aws-lambda";
 import { readFileSync } from "fs";
 import { join } from "path";
-
-let chrome: any = {};
-let puppeteer: any;
-
-if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-  chrome = require("@sparticuz/chromium");
-  puppeteer = require("puppeteer-core");
-} else {
-  puppeteer = require("puppeteer");
-}
+import playwright from "playwright-core";
 
 export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
   new Promise<Buffer | string>(async (resolve) => {
-    let options = {};
+    const options =
+      process.env.NODE_ENV === "production"
+        ? {
+            args: [
+              ...chromium.args,
+              "--hide-scrollbars",
+              "--disable-web-security",
+            ],
+            executablePath: await chromium.executablePath,
+            headless: true,
+          }
+        : {};
 
-    if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-      options = {
-        args: chrome.args,
-        executablePath: await chrome.executablePath,
-        headless: true,
-        ignoreHTTPSErrors: true,
-      };
-    }
-
-    const browser = await puppeteer.launch(options);
+    const browser = await playwright.chromium.launch(options);
 
     let page = await browser.newPage();
 
-    await page.setViewport({ width: 2480, height: 3508 });
+    await page.setViewportSize({ width: 2480, height: 3508 });
 
     const css = readFileSync(
-      join(process.cwd(), "public", "print-pupeteer.css"),
+      join(process.cwd(), "public", "print-playwright.css"),
       "utf8"
-    );
-
-    const Montserrat = readFileSync(
-      join(process.cwd(), "public", "fonts", "Montserrat-Bold.ttf"),
-      { encoding: "base64" }
     );
 
     const html = `
           <style>
-            @font-face {
-              font-family: "Montserrat";
-              src: url("data:font/ttf;base64,${Montserrat}");
-            }
-
             ${css}
           </style>
           <div class="grid">
@@ -66,7 +50,7 @@ export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
         `;
 
     await page.setContent(html, {
-      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
+      waitUntil: "networkidle",
     });
 
     const buffer = await page.pdf({

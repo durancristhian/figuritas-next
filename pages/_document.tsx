@@ -8,7 +8,7 @@ export default function Document() {
           href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="/favicon.png" />
+        <link rel="icon" href="/favicon.jpg" />
         <meta
           name="title"
           content="Crea tu álbum de figuritas del mundial personalizado."

@@ -28,7 +28,7 @@ export const Sticker = ({
           "--birthday-size": "0.25cm",
           "--name-bottom": "0.8cm",
           "--birthday-bottom": "0.38cm",
-          "--card-bg": `url('/sticker-template/background.png')`,
+          "--card-bg": `url('/sticker-template/background.jpg')`,
           "--card-information": `url('/sticker-template/pos-${position}.png')`,
           "--flag": `url('/sticker-template/flag-${country}.png')`,
           "--player-image": `url('${image}')`,
