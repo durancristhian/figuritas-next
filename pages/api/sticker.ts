@@ -1,8 +1,7 @@
-import chromium from "chrome-aws-lambda";
 import { readFileSync } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
-import playwright from "playwright-core";
+import { getBrowser } from "../../src/utils/get-browser";
 import { Person } from "../../types/person";
 
 type EndpointError = {
@@ -41,24 +40,11 @@ export default async function stickerHandler(
 
 const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const options =
-      process.env.VERCEL_ENV === "production"
-        ? {
-            args: [
-              ...chromium.args,
-              "--hide-scrollbars",
-              "--disable-web-security",
-            ],
-            executablePath: await chromium.executablePath,
-            headless: true,
-          }
-        : {};
-
-    const browser = await playwright.chromium.launch(options);
+    const browser = await getBrowser();
 
     let page = await browser.newPage();
 
-    await page.setViewportSize({ width: 600, height: 840 });
+    await page.setViewport({ width: 600, height: 840 });
 
     const css = `
       html,
@@ -196,7 +182,7 @@ const generatePicture = async (stickerConfig: Person) =>
         `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle",
+      waitUntil: "networkidle0",
     });
 
     const buffer = await page.screenshot();

@@ -1,8 +1,7 @@
-import chromium from "chrome-aws-lambda";
 import multer from "multer";
 import { NextApiRequest, NextApiResponse } from "next";
 import nextConnect from "next-connect";
-import playwright from "playwright-core";
+import { getBrowser } from "../../src/utils/get-browser";
 
 type EndpointError = {
   message: string;
@@ -59,24 +58,11 @@ export const config = {
 
 const generatePdf = async (stickers: { buffer: Buffer }[]) =>
   new Promise<Buffer | string>(async (resolve) => {
-    const options =
-      process.env.VERCEL_ENV === "production"
-        ? {
-            args: [
-              ...chromium.args,
-              "--hide-scrollbars",
-              "--disable-web-security",
-            ],
-            executablePath: await chromium.executablePath,
-            headless: true,
-          }
-        : {};
-
-    const browser = await playwright.chromium.launch(options);
+    const browser = await getBrowser();
 
     let page = await browser.newPage();
 
-    await page.setViewportSize({ width: 2480, height: 3508 });
+    await page.setViewport({ width: 2480, height: 3508 });
 
     const css = `
       html,
@@ -131,7 +117,7 @@ const generatePdf = async (stickers: { buffer: Buffer }[]) =>
         `;
 
     await page.setContent(html, {
-      waitUntil: "networkidle",
+      waitUntil: "networkidle0",
     });
 
     const buffer = await page.pdf({
