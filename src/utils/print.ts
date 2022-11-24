@@ -1,6 +1,4 @@
 import chromium from "chrome-aws-lambda";
-import { readFileSync } from "fs";
-import { join } from "path";
 import playwright from "playwright-core";
 
 export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
@@ -24,10 +22,37 @@ export const generatePdf = async (stickers: { buffer: Buffer }[]) =>
 
     await page.setViewportSize({ width: 2480, height: 3508 });
 
-    const css = readFileSync(
-      join(process.cwd(), "public", "print-playwright.css"),
-      "utf8"
-    );
+    const css = `
+      html,
+      body {
+        line-height: 1;
+        margin: 0;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .sticker-container {
+        height: calc(100vh / 4);
+        padding: 1px;
+        width: calc(100vw / 4);
+      }
+
+      .sticker {
+        display: block;
+        height: 100%;
+        margin: 0 auto;
+        width: 100%;
+      }
+    `;
 
     const html = `
           <style>

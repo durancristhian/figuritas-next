@@ -25,10 +25,91 @@ export const generatePicture = async (stickerConfig: Person) =>
 
     await page.setViewportSize({ width: 600, height: 840 });
 
-    const css = readFileSync(
-      join(process.cwd(), "public", "sticker-playwright.css"),
-      "utf8"
-    );
+    const css = `
+      html,
+      body {
+        font-family: "Montserrat" !important;
+        line-height: 1;
+        margin: 0;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      .card {
+        height: 840px;
+        margin: 0 auto;
+        position: relative;
+        width: 600px;
+      }
+
+      .background,
+      .flag,
+      .information {
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .background {
+        z-index: 0;
+      }
+
+      .playerImage {
+        background-position: center center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        bottom: 10%;
+        filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff)
+          drop-shadow(-3px -3px 0 #fff) drop-shadow(3px 3px 0 #fff);
+        height: 80%;
+        left: 12%;
+        position: absolute;
+        width: 76%;
+        z-index: 1;
+      }
+
+      .information {
+        z-index: 2;
+      }
+
+      .flag {
+        z-index: 3;
+      }
+
+      .name {
+        bottom: 80px;
+        color: #111;
+        font-size: 45px;
+        font-weight: bold;
+        left: 0;
+        position: absolute;
+        text-align: center;
+        text-transform: uppercase;
+        width: 100%;
+        z-index: 4;
+      }
+
+      .birthday {
+        bottom: 40px;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        left: 0;
+        position: absolute;
+        text-align: center;
+        width: 100%;
+        z-index: 5;
+      }
+    `;
 
     const cardBg = readFileSync(
       join(process.cwd(), "public", "sticker-template", "background.jpg"),
