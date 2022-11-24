@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { join } from "path";
 import playwright from "playwright-core";
+import { Person } from "../../types/person";
 
 type EndpointError = {
   message: string;
@@ -21,7 +22,7 @@ export default async function stickerHandler(
       return;
     }
 
-    const stickerConfig = JSON.parse(req.body) as any;
+    const stickerConfig = JSON.parse(req.body) as Person;
 
     const fileBuffer = await generatePicture(stickerConfig);
 
@@ -38,7 +39,7 @@ export default async function stickerHandler(
   }
 }
 
-const generatePicture = async (stickerConfig: any) =>
+const generatePicture = async (stickerConfig: Person) =>
   new Promise<Buffer | string>(async (resolve) => {
     const options =
       process.env.VERCEL_ENV === "production"
