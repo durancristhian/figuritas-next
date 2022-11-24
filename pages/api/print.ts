@@ -97,24 +97,22 @@ const generatePdf = async (stickers: { buffer: Buffer }[]) =>
     `;
 
     const html = `
-          <style>
-            ${css}
-          </style>
-          <div class="grid">
-            ${stickers
-              .map(
-                (sticker) => `<div class="sticker-container">
-                  <img
-                    class="sticker"
-                    src="data:image/png;base64,${sticker.buffer.toString(
-                      "base64"
-                    )}"
-                  />
-                </div>`
-              )
-              .join("")}
-          </div>
-        `;
+      <style>
+        ${css}
+      </style>
+      <div class="grid">
+        ${stickers
+          .map(
+            (sticker) => `<div class="sticker-container">
+              <img
+                class="sticker"
+                src="data:image/png;base64,${sticker.buffer.toString("base64")}"
+              />
+            </div>`
+          )
+          .join("")}
+      </div>
+    `;
 
     await page.setContent(html, {
       waitUntil: "networkidle0",

@@ -163,23 +163,22 @@ const generatePicture = async (stickerConfig: Person) =>
     );
 
     const html = `
-          <style>
-            @font-face {
-              font-family: "Montserrat";
-              src: url("data:font/ttf;base64,${Montserrat}");
-            }
-
-            ${css}
-          </style>
-          <div class="card">
-            <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
-            <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
-            <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
-            <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
-            <div class="name">${stickerConfig.name}</div>
-            <div class="birthday">${stickerConfig.birthday}</div>
-          </div>
-        `;
+      <style>
+        @font-face {
+          font-family: "Montserrat";
+          src: url("data:font/ttf;base64,${Montserrat}");
+        
+        ${css}
+      </style>
+      <div class="card">
+        <div class="background" style="background-image:url('data:image/png;base64,${cardBg}')"></div>
+        <div class="playerImage" style="background-image:url('${stickerConfig.image}')"></div>
+        <div class="information" style="background-image:url('data:image/png;base64,${information}')"></div>
+        <div class="flag" style="background-image:url('data:image/png;base64,${flag}')"></div>
+        <div class="name">${stickerConfig.name}</div>
+        <div class="birthday">${stickerConfig.birthday}</div>
+      </div>
+    `;
 
     await page.setContent(html, {
       waitUntil: "networkidle0",
