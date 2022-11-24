@@ -11,7 +11,7 @@ type EndpointError = {
 
 export default async function stickerHandler(
   req: NextApiRequest,
-  res: NextApiResponse<Buffer | string | EndpointError>
+  res: NextApiResponse<Buffer | EndpointError>
 ) {
   try {
     if (req.method !== "POST") {
@@ -40,7 +40,7 @@ export default async function stickerHandler(
 }
 
 const generatePicture = async (stickerConfig: Person) =>
-  new Promise<Buffer | string>(async (resolve) => {
+  new Promise<Buffer>(async (resolve) => {
     const executablePath =
       (await chromium.executablePath) ||
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -48,7 +48,6 @@ const generatePicture = async (stickerConfig: Person) =>
     const options = {
       executablePath,
       args: chromium.args,
-      headless: false,
     };
 
     const browser = await puppeteer.launch(options);
@@ -192,7 +191,7 @@ const generatePicture = async (stickerConfig: Person) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
+      waitUntil: "networkidle0",
     });
 
     const buffer = await page.screenshot({ encoding: "binary" });

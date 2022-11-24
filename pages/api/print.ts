@@ -58,7 +58,7 @@ export const config = {
 };
 
 const generatePdf = async (stickers: { buffer: Buffer }[]) =>
-  new Promise<Buffer | string>(async (resolve) => {
+  new Promise<Buffer>(async (resolve) => {
     const executablePath =
       (await chromium.executablePath) ||
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -66,7 +66,6 @@ const generatePdf = async (stickers: { buffer: Buffer }[]) =>
     const options = {
       executablePath,
       args: chromium.args,
-      headless: false,
     };
 
     const browser = await puppeteer.launch(options);
@@ -126,7 +125,7 @@ const generatePdf = async (stickers: { buffer: Buffer }[]) =>
     `;
 
     await page.setContent(html, {
-      waitUntil: ["domcontentloaded", "load", "networkidle0", "networkidle2"],
+      waitUntil: "networkidle0",
     });
 
     const buffer = await page.pdf({ format: "a4" });
